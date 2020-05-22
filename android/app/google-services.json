@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "366912052997",
+    "firebase_url": "https://saleschat-7241a.firebaseio.com",
+    "project_id": "saleschat-7241a",
+    "storage_bucket": "saleschat-7241a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:366912052997:android:3dd332359a6b25438f616c",
+        "android_client_info": {
+          "package_name": "com.example.saleschat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "366912052997-5odcv8m7990sg3qfd2g8hr4aaqep6rvm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.saleschat",
+            "certificate_hash": "c57a746a962861b835daba7de7d6edaecafb3852"
+          }
+        },
+        {
+          "client_id": "366912052997-ujq2gbhi1df02s0bgrvhbq87j2snmqpd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQWfbOD801P6Cu_4Logx2w-ZeCknlHC_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "366912052997-ujq2gbhi1df02s0bgrvhbq87j2snmqpd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
