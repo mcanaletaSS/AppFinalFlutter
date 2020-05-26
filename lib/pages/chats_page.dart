@@ -25,36 +25,26 @@ class _ChatsPageState extends State<ChatsPage> {
   bool _loadingContacts = false;
 
   @override
-  void initState() {
-    _chats = [];
-    _chatsBloc.chats.listen((event) {
-      print('REBUT DADES');
-      setState(() {
-        _chats = event;  
-      });
-     });
-    _chatsBloc.getChats();
-    super.initState();
-  }
-
-  @override
   void dispose() {
-    _chatsBloc.dispose();
     super.dispose();
+    _chatsBloc.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      initialIndex: _active,
-      length: 2,
-      child: Scaffold(
-        appBar: _appBar(context),
-        body: _body(context),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _chatsBloc.getChats(),
-          child: Icon(Icons.refresh),
-        ),
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: DefaultTabController(
+        initialIndex: _active,
+        length: 2,
+        child: Scaffold(
+          appBar: _appBar(context),
+          body: _body(context),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _chatsBloc.getChats(),
+            child: Icon(Icons.refresh),
+          ),
+        )
       )
     );
   }
@@ -122,6 +112,7 @@ class _ChatsPageState extends State<ChatsPage> {
             ) : null
           ],
           onSelected: (String value){
+            if(value == 'config') Navigator.of(context).pushNamed('configs');
             if(value == 'import') _updateNewContacts();
             if(value == 'export') Navigator.of(context).pushNamed('export');
             if(value == 'add') Navigator.of(context).pushNamed('addContact');
@@ -173,11 +164,11 @@ class _ChatsPageState extends State<ChatsPage> {
   //-----------------------CHATS-----------------------------
 
   Widget _llistaChats(BuildContext context) {
-    /*return StreamBuilder<List<Map<String, dynamic>>>(
+    return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _chatsBloc.chats,
       builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
         snapshot.hasData ? _chats = snapshot.data : null;
-        print(snapshot.data);*/
+        print(snapshot.data);
         if(_chats.length > 0) {
           return RefreshIndicator(
               child: ListView(
@@ -188,8 +179,8 @@ class _ChatsPageState extends State<ChatsPage> {
         }else{
             return _noChatsFound();
         }
-      /*}
-    );*/
+      }
+    );
   }
 
   List<Widget> _generadorLlistaChats() {
@@ -203,14 +194,10 @@ class _ChatsPageState extends State<ChatsPage> {
               _openChat(context, chats, false);
             },
             child:ListTile(
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(25.0),
-                child: FadeInImage(
-                    fit: BoxFit.cover,
-                    width: 60,
-                    placeholder: AssetImage('assets/user.png'),
-                    image: NetworkImage(chats['PHOTO']),
-                )
+              leading: CircleAvatar(
+                radius: 25.0,
+                backgroundImage: NetworkImage(chats['PHOTO']),
+                backgroundColor: Colors.transparent,
               ),
               title: Text(
                 chats['NAME'],
@@ -278,6 +265,7 @@ class _ChatsPageState extends State<ChatsPage> {
             child: ListTile(
               leading: CircleAvatar(
                 backgroundImage: NetworkImage(contacte['PHOTO']),
+                backgroundColor: Colors.transparent,
                 radius: 25,
               ),
               title: Text(

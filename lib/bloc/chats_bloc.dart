@@ -6,7 +6,7 @@ class ChatsBloc {
   DatabaseProvider db = DatabaseProvider.instance;
 
    ChatsBloc() {
-    //getChats();
+    getChats();
   }
   final _chatsController = StreamController<List<Map<String, dynamic>>>.broadcast();
   Stream<List<Map<String, dynamic>>> get chats => _chatsController.stream;
@@ -18,7 +18,7 @@ class ChatsBloc {
 
   Future<void> getChats() async {
     db.queryJoin('CHATS', 'CONTACTS', 'USERID', 'USERID').then((value){
-      _chatsController.add(value);
+      _chatsController.sink.add(value);
     });
   }
 

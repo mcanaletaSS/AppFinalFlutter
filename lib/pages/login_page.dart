@@ -14,16 +14,17 @@ class _LoginPageState extends State<LoginPage> {
   final formKey = new GlobalKey<FormState>();
   String phoneNo, verificationId, smsCode;
   
+  bool _loading = false;
   bool codeSent = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-       appBar: AppBar(
-         title: Text('Iniciar Sessió'),
-         leading: Icon(Icons.person)
-       ),
-       body: _loginForm()
+      appBar: AppBar(
+        title: Text('Iniciar Sessió'),
+        leading: Icon(Icons.person)
+      ),
+      body: _loginForm()
     );
   }
   
@@ -33,9 +34,10 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          !codeSent ? _phoneTextField() : SizedBox(),
-          codeSent ? _smsCodeTextField() : SizedBox(),
-          _verifyButton()
+          !_loading && !codeSent ? _phoneTextField() : SizedBox(),
+          !_loading && codeSent ? _smsCodeTextField() : SizedBox(),
+          !_loading ? _verifyButton() : SizedBox(),
+          _loading ? _loadingWidget() : SizedBox()
         ],
       ),
     );
@@ -68,9 +70,11 @@ class _LoginPageState extends State<LoginPage> {
         ),
         maxLength: 9,
         onChanged: (val) {
-          setState(() {
-            this.phoneNo = '+34' + val;
-          });
+          if(val.length <= 9){
+            setState(() {
+              this.phoneNo = '+34' + val;
+            });
+          }
         },
       ),
     );
@@ -105,9 +109,11 @@ class _LoginPageState extends State<LoginPage> {
         maxLength: 6,
         textAlign: TextAlign.center,
         onChanged: (val) {
-          setState(() {
-            this.smsCode = val;
-          });
+          if(val.length <= 6){
+            setState(() {
+              this.smsCode = val;
+            });
+          }
         },
       ),
     );
@@ -129,17 +135,29 @@ class _LoginPageState extends State<LoginPage> {
               :
               Text('Verifica', style: TextStyle(color: Colors.red)),
           ),
-          onPressed: () {
-            codeSent ? AuthProvider().signInWithOTP(context, smsCode, verificationId, true, phoneNo) : verifyPhone(context, phoneNo);
+          onPressed: () async {
+            setState(() {
+              _loading = true;
+            });
+            codeSent ? await AuthProvider().signInWithOTP(context, smsCode, verificationId, true, phoneNo) : await verifyPhone(context, phoneNo);
+            setState(() {
+              _loading = false;
+            });
           }
         ),
       ),
     );
   }
 
+  Widget _loadingWidget() {
+    return Center(
+      child: CircularProgressIndicator()
+    );
+  }
+
   Future<void> verifyPhone(BuildContext context, String phoneNo) async {
-    final PhoneVerificationCompleted verified = (AuthCredential authResult) {
-      AuthProvider().signIn(context, authResult, true, phoneNo);
+    final PhoneVerificationCompleted verified = (AuthCredential authResult) async {
+      await AuthProvider().signIn(context, authResult, true, phoneNo);
     };
 
     final PhoneVerificationFailed verificationfailed = (AuthException authException) {

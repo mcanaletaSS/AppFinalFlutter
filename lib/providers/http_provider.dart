@@ -12,9 +12,8 @@ class HttpProvider {
   
   DatabaseProvider databaseProvider = DatabaseProvider.instance;
 
-  Future<Response> createUser(String phone, String state, String username, File photo) async {
+  Future<Response> createUser(String phone, String state, String username, String photoUrl) async {
     Response devolver = new Response();
-    String photoUrl = await StorageProvider().postDocument(photo, phone);
     String pushNotificationToken;
     pushNotificationToken = await sharedPreferencesProvider.getStringValue('pushNotificationToken');
      
@@ -33,6 +32,7 @@ class HttpProvider {
     devolver.codigo = response.statusCode;
     Map<String, dynamic> result = jsonDecode(response.body);
     if(devolver.codigo == 201){
+      devolver.mensaje = result['_id'];
       sharedPreferencesProvider.setStringValue('token', result['token']);
     }else{
       switch (devolver.codigo) {
@@ -133,6 +133,38 @@ class HttpProvider {
     );
     Map<String, dynamic> result = jsonDecode(response.body);
     return result;
+  }
+
+  Future<Response> updateUser(String phone, String state, String username, String photoUrl) async {
+    Response devolver = new Response();
+    String token = await sharedPreferencesProvider.getStringValue('token');
+    
+    http.Response response = await http.put(
+      new Uri.http(uri, '/user/' + phone),
+      headers: {
+        HttpHeaders.authorizationHeader: 'Bearer ' + token,
+        HttpHeaders.contentTypeHeader: 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'photo': photoUrl,
+        'state': state,
+        'username': username
+      })
+    );
+    devolver.codigo = response.statusCode;
+    Map<String, dynamic> result = jsonDecode(response.body);
+    if(devolver.codigo == 201){
+      devolver.mensaje = result['_id'];
+    }else{
+      switch (devolver.codigo) {
+        case 404:
+          devolver.mensaje = 'Vaja, no hem trobat l\'usuari';
+          break;
+        default:
+          devolver.mensaje = 'Error inesperat, intenta-ho més tard';
+      }
+    }
+    return devolver;
   }
 }
 class Response {

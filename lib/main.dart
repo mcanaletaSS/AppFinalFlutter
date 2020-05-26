@@ -17,6 +17,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'SalesChat',
       navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
       initialRoute: '/',
       theme: ThemeData(
         primarySwatch: Colors.red,

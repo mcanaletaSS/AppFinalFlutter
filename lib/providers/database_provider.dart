@@ -40,7 +40,8 @@ class DatabaseProvider {
         STATE TEXT NOT NULL,
         USERNAME TEXT NOT NULL,
         PHONE TEXT NOT NULL,
-        NAME TEXT NOT NULL
+        NAME TEXT NOT NULL,
+        ME INTEGER NOT NULL
       )
       ''');
     await db.execute('''
@@ -139,4 +140,12 @@ class DatabaseProvider {
     return Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM $table WHERE $column = \'$value\';'));
   }
 
+  Future<List<Map<String, dynamic>>> queryWhere(String table, String column, String value) async {
+    Database db = await instance.database;
+    return await db.rawQuery('SELECT * FROM $table WHERE $column = \'$value\';');
+  }
+  Future<int> updateWhere(Map<String, dynamic> row, String table, String column, String value) async {
+    Database db = await instance.database;
+    return await db.update(table, row, where: '$column = \'$value\'');
+  }
 }

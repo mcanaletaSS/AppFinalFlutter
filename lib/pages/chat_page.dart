@@ -27,6 +27,7 @@ class _ChatPageState extends State<ChatPage> {
            padding: const EdgeInsets.all(8.0),
            child: CircleAvatar(
             backgroundImage: NetworkImage(_user['PHOTO']),
+            backgroundColor: Colors.transparent,
         ),
          ),
       ),

@@ -6,7 +6,7 @@ import 'package:saleschat/providers/http_provider.dart';
 import 'package:saleschat/providers/preferences_provider.dart';
 
 class AuthProvider {
-  signIn(BuildContext context, AuthCredential authCreds, bool isLogin, String phone) async {
+  Future<void> signIn(BuildContext context, AuthCredential authCreds, bool isLogin, String phone) async {
     String route;
     isLogin ? route = 'login' : route = 'verifyPhone';
     try{
@@ -28,12 +28,12 @@ class AuthProvider {
       mostrarAlert(context, route);
     }
   }
-  signInWithOTP(BuildContext context, String smsCode, String verId, bool isLogin, String phone){
+  Future<void> signInWithOTP(BuildContext context, String smsCode, String verId, bool isLogin, String phone) async {
     AuthCredential authCreds = PhoneAuthProvider.getCredential(
       verificationId: verId,
       smsCode: smsCode
     );
-    signIn(context, authCreds, isLogin, phone);
+    await signIn(context, authCreds, isLogin, phone);
   }
   
   void mostrarAlert(BuildContext context, String route) {

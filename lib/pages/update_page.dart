@@ -4,40 +4,45 @@ import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:saleschat/providers/contacts_provider.dart';
 import 'package:saleschat/providers/database_provider.dart';
 import 'package:saleschat/providers/http_provider.dart';
 import 'package:saleschat/providers/preferences_provider.dart';
 import 'package:saleschat/providers/storage_provider.dart';
 
-class SignInPage extends StatefulWidget {
-  SignInPage({Key key}) : super(key: key);
+class UpdatePage extends StatefulWidget {
+  UpdatePage({Key key}) : super(key: key);
 
   @override
-  _SignInPageState createState() => _SignInPageState();
+  _UpdatePageState createState() => _UpdatePageState();
 }
 
-class _SignInPageState extends State<SignInPage> {
+class _UpdatePageState extends State<UpdatePage> {
   File _image;
+  String _imgUrl;
   String _username, _state;
   HttpProvider _httpProvider = new HttpProvider();
   bool _loading = false;
-
+  
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child:Scaffold(
-        appBar: AppBar(
-          title: Text('Nou Usuari'),
-          leading: Icon(Icons.person)
-        ),
-        body: _signInBody(context)
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Editar Usuari'),
+      ),
+      body: FutureBuilder(
+        future: _getUser(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if(snapshot.hasData){
+            return _updateBody(context);
+          }else{
+            return Center(child: CircularProgressIndicator());
+          }
+        }
       )
     );
   }
 
-  Widget _signInBody(BuildContext context){
+  Widget _updateBody(BuildContext context){
     return SingleChildScrollView(
       padding: const EdgeInsets.all(40.0),
       child: Center(
@@ -49,7 +54,7 @@ class _SignInPageState extends State<SignInPage> {
             _whiteSpace(),
             !_loading ? _stateInput() : SizedBox(),
             _whiteSpace(),
-            !_loading ? _createButton(context) : SizedBox(),
+            !_loading ? _updateButton(context) : SizedBox(),
             _loading ? _loadingWidget() : SizedBox()
           ],
         ),
@@ -66,8 +71,8 @@ class _SignInPageState extends State<SignInPage> {
         );
       },
       child: CircleAvatar(
-        backgroundImage: _image == null ? AssetImage('assets/user.png') : FileImage(_image),
-        backgroundColor: Colors.white,
+        backgroundImage: _image == null ? NetworkImage(_imgUrl) : FileImage(_image),
+        backgroundColor: Colors.redAccent,
         radius: 75,
       ),
     );
@@ -79,6 +84,7 @@ class _SignInPageState extends State<SignInPage> {
       decoration: InputDecoration(
         hintText: 'Nom d\'usuari'
       ),
+      initialValue: _username,
       onChanged: (txt){
         setState(() {
           _username = txt;
@@ -93,6 +99,7 @@ class _SignInPageState extends State<SignInPage> {
       decoration: InputDecoration(
         hintText: 'Estat'
       ),
+      initialValue: _state,
       onChanged: (txt){
         setState(() {
           _state = txt;
@@ -113,17 +120,17 @@ class _SignInPageState extends State<SignInPage> {
     );
   }
 
-  Widget _createButton(context){
+  Widget _updateButton(context){
     return RaisedButton(
       color: Theme.of(context).primaryColor,
       textColor: Colors.white,
-      child: Text('Crear Usuari'),
+      child: Text('Actualitzar Usuari'),
       autofocus: true,
       onPressed: () async {
         setState(() {
           _loading = true;
         });
-        await createUser(context);
+        await updateUser(context);
         setState(() {
           _loading = false;
         });
@@ -148,7 +155,7 @@ class _SignInPageState extends State<SignInPage> {
           ),
           _image != null ? ListTile(
             leading: Icon(Icons.camera_alt),
-            title: Text('Eliminar imatge actual'),
+            title: Text('Eliminar canvi'),
             onTap: () => removeImage(context)
           ) : SizedBox()
         ],
@@ -167,49 +174,6 @@ class _SignInPageState extends State<SignInPage> {
     setState(() => _image = null);
     Navigator.pop(context);
   }
-
-  Future<void> createUser(BuildContext context) async {
-    DatabaseProvider db = DatabaseProvider.instance;
-    String _phone = await sharedPreferencesProvider.getStringValue('phone');
-    File image = await getImageFileFromAssets('user.png');
-    if(_image == null){
-      setState(() {
-        _image = image;
-      });
-    }
-    String photoUrl = await StorageProvider().postDocument(_image, _phone);
-    Response respuesta = await _httpProvider.createUser(
-      _phone,
-      _state,
-      _username,
-      photoUrl
-    );
-    if(respuesta.codigo == 201) {
-      List<Map<String, String>> phones = await ContactsProvider().getContactsPhones();
-      await HttpProvider().verifyPhones(phones);
-      await db.insert(
-        {
-          'USERID': respuesta.mensaje,
-          'PHOTO': photoUrl,
-          'STATE': _state,
-          'USERNAME': _username,
-          'PHONE': _phone,
-          'NAME': 'JO',
-          'ME': 1
-        },
-        'CONTACTS'
-      );
-      Navigator.pushNamed(context, 'chats');
-    }else{
-       showDialog(
-         context: context,
-         barrierDismissible: false,
-         builder: (BuildContext context) {
-           return getAlertDialog(respuesta.mensaje);
-         },
-       );
-    }
-  }
   
   Future<File> getImageFileFromAssets(String path) async {
     final byteData = await rootBundle.load('assets/$path');
@@ -220,10 +184,10 @@ class _SignInPageState extends State<SignInPage> {
     return file;
   }
 
-  Widget getAlertDialog(String mensaje){
+  Widget getAlertDialog(String mensaje, bool isError){
     return AlertDialog(
       title: Text(
-        'Error',
+        isError ? 'Error' : 'Actualitzat!',
         style: TextStyle(
           fontSize: 20
         ),
@@ -244,6 +208,66 @@ class _SignInPageState extends State<SignInPage> {
         ),
       ],
     );
+  }
+
+  Future<void> updateUser(BuildContext context) async {
+    DatabaseProvider db = DatabaseProvider.instance;
+    String _phone = await sharedPreferencesProvider.getStringValue('phone');
+    if(_image == null){
+      File image = await getImageFileFromAssets('user.png');
+      setState(() {
+        _image = image;
+      });
+    }
+    String photoUrl = await StorageProvider().postDocument(_image, _phone);
+    Response respuesta = await _httpProvider.updateUser(
+      _phone,
+      _state,
+      _username,
+      photoUrl
+    );
+    if(respuesta.codigo == 200) {
+      await db.updateWhere(
+        {
+          'USERID': respuesta.mensaje,
+          'PHOTO': photoUrl,
+          'STATE': _state,
+          'USERNAME': _username,
+          'PHONE': _phone,
+          'NAME': 'JO',
+          'ME': 1
+        },
+        'CONTACTS', 'NAME', 'JO'
+      );
+      showDialog(
+         context: context,
+         barrierDismissible: false,
+         builder: (BuildContext context) {
+           return getAlertDialog('Dades actualitzades correctament.', false);
+         },
+       );
+    }else{
+       showDialog(
+         context: context,
+         barrierDismissible: false,
+         builder: (BuildContext context) {
+           return getAlertDialog(respuesta.mensaje, true);
+         },
+       );
+    }
+  }
+
+  Future<bool> _getUser() async {
+    DatabaseProvider db = DatabaseProvider.instance;
+    List<Map<String, dynamic>> result = await db.queryWhere('CONTACTS', 'NAME', 'JO');
+    if(result.length > 0 && _imgUrl == null && _username == null && _state == null){
+      setState(() {
+        _imgUrl = result[0]['PHOTO'];
+        _state = result[0]['STATE'];
+        _username = result[0]['USERNAME'];
+      });
+    }
+    return true;
   }
 
 }

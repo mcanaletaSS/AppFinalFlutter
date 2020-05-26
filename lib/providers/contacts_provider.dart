@@ -58,6 +58,7 @@ class ContactsProvider {
           'USERNAME': contacte['username'],
           'PHONE': contacte['phone'],
           'NAME': contacte['name'],
+          'ME': 0
         },
         'CONTACTS'
       ).catchError((onError){});
